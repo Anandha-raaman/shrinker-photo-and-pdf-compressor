@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://shrinker-photo-and-pdf-compressor.vercel.app/sitemap.xml
