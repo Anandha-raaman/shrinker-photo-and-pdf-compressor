@@ -1,0 +1,18 @@
+{
+  "name": "Shrinkr: PDF & Image Compressor",
+  "short_name": "Shrinkr",
+  "description": "Compress photos and PDFs to exact KB. 100% offline & private.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d111a",
+  "theme_color": "#0d111a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
