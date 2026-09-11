@@ -121,7 +121,7 @@ export const StoreAssetsGenerator: React.FC = () => {
     ctx.fillStyle = '#ffffff';
     ctx.font = '800 64px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('Shrinkr', 80, 180);
+    ctx.fillText('Shrinker', 80, 180);
 
     // Gradient accent on subtitle
     const textGrad = ctx.createLinearGradient(80, 0, 600, 0);

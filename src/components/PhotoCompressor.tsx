@@ -189,10 +189,10 @@ export const PhotoCompressor: React.FC = () => {
         });
         await navigator.share({
           files: [shareFile],
-          title: 'Compressed Image by Shrinkr',
+          title: 'Compressed Image by Shrinker',
           text: `Compressed from ${formatBytes(result.originalSize)} to ${formatBytes(
             result.size
-          )} (-${result.savingsPercent}%) using Shrinkr`,
+          )} (-${result.savingsPercent}%) using Shrinker`,
         });
       } else {
         handleManualDownloadClick();

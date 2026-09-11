@@ -11,9 +11,9 @@ export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme, onOpenStor
   return (
     <header className="app-header">
       <div className="brand-wrapper">
-        <img src="/icon.svg" alt="Shrinkr Logo" className="brand-icon" />
+        <img src="/icon.svg" alt="Shrinker Logo" className="brand-icon" />
         <div className="brand-text">
-          <h1>Shrinkr</h1>
+          <h1>Shrinker</h1>
           <div className="tagline">PDF & Image Compressor</div>
         </div>
       </div>

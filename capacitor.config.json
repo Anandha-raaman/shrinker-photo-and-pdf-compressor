@@ -1,6 +1,6 @@
 {
-  "appId": "com.shrinkr.app",
-  "appName": "Shrinkr",
+  "appId": "com.shrinker.app",
+  "appName": "Shrinker",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "server": {

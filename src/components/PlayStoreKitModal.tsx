@@ -15,13 +15,13 @@ export const PlayStoreKitModal: React.FC<PlayStoreKitModalProps> = ({ onClose })
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  const appTitle = 'Shrinkr: PDF & Image Compressor';
-  const shortDescription = 'Compress PDFs & images to exact KB (20KB, 50KB, 100KB). 100% Offline & Private.';
+  const appTitle = 'Shrinker: PDF & Photo Compressor';
+  const shortDescription = 'Compress PDFs & photos to exact KB (20KB, 50KB, 100KB). 100% Offline & Private.';
   const fullDescription = `Need to compress a PDF or photo to an exact file size for an online application?
 
-Shrinkr is the fastest, 100% offline PDF and Image Compressor built specifically for government job forms, university applications, passport submissions, visa portals, and email attachments.
+Shrinker is the fastest, 100% offline PDF and Image Compressor built specifically for government job forms, university applications, passport submissions, visa portals, and email attachments.
 
-🔥 WHY PEOPLE LOVE SHRINKR:
+🔥 WHY PEOPLE LOVE SHRINKER:
 • Exact KB Compression: Select 20 KB (Signature/Thumbprint), 50 KB (Passport photo), 100 KB, 200 KB, or enter any custom KB value!
 • 100% Private & Offline: Your files NEVER leave your phone. All image and PDF compression runs locally on your device.
 • Multi-Page PDF Compressor: Easily shrink scanned documents, resumes, and certificates from 10MB down to <300KB without losing text clarity.
@@ -36,7 +36,7 @@ Shrinkr is the fastest, 100% offline PDF and Image Compressor built specifically
 - Job Application Portals
 - Email attachment limits
 
-Save storage space and bypass strict upload size limits in seconds with Shrinkr!`;
+Save storage space and bypass strict upload size limits in seconds with Shrinker!`;
 
   return (
     <div className="modal-overlay" onClick={onClose}>

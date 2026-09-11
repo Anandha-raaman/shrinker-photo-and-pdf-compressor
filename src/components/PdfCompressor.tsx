@@ -150,10 +150,10 @@ export const PdfCompressor: React.FC = () => {
         });
         await navigator.share({
           files: [shareFile],
-          title: 'Compressed PDF by Shrinkr',
+          title: 'Compressed PDF by Shrinker',
           text: `Compressed from ${formatBytes(result.originalSize)} to ${formatBytes(
             result.size
-          )} (-${result.savingsPercent}%) using Shrinkr`,
+          )} (-${result.savingsPercent}%) using Shrinker`,
         });
       } else {
         handleManualDownloadClick();

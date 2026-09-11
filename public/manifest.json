@@ -1,6 +1,6 @@
 {
-  "name": "Shrinkr: PDF & Image Compressor",
-  "short_name": "Shrinkr",
+  "name": "Shrinker: Photo & PDF Compressor",
+  "short_name": "Shrinker",
   "description": "Compress photos and PDFs to exact KB. 100% offline & private.",
   "start_url": "/",
   "display": "standalone",
