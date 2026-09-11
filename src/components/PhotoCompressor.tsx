@@ -29,12 +29,22 @@ const PRESETS = [
   { kb: 1024, label: '1 MB HD', desc: 'High Quality' },
 ];
 
-export const PhotoCompressor: React.FC = () => {
+interface PhotoCompressorProps {
+  initialTargetKb?: number;
+}
+
+export const PhotoCompressor: React.FC<PhotoCompressorProps> = ({ initialTargetKb = 50 }) => {
   const [file, setFile] = useState<File | null>(null);
   const [originalPreview, setOriginalPreview] = useState<string | null>(null);
-  const [selectedPreset, setSelectedPreset] = useState<number | null>(50); // default 50KB
+  const [selectedPreset, setSelectedPreset] = useState<number | null>(initialTargetKb);
   const [customKb, setCustomKb] = useState<string>('');
   const [mode, setMode] = useState<'preset' | 'manual'>('preset');
+
+  React.useEffect(() => {
+    if (initialTargetKb) {
+      setSelectedPreset(initialTargetKb);
+    }
+  }, [initialTargetKb]);
 
   // Manual sliders
   const [quality, setQuality] = useState<number>(75);

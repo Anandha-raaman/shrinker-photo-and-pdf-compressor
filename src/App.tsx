@@ -10,13 +10,68 @@ import { MONETIZATION_CONFIG } from './config/monetization';
 import { Sparkles, ShieldCheck, Zap, Heart } from 'lucide-react';
 import './styles/app.css';
 
+interface RouteConfig {
+  tab: ActiveTab;
+  targetKb: number;
+  badgeText: string;
+  title: string;
+}
+
+const getRouteConfig = (): RouteConfig => {
+  const path = window.location.pathname.toLowerCase();
+  if (path.includes('compress-signature-to-20kb')) {
+    return {
+      tab: 'photo',
+      targetKb: 20,
+      badgeText: '✍️ Signature Mode: 20 KB',
+      title: 'Compress Signature to 20KB Online (UPSC, SSC, IBPS) — Shrinker',
+    };
+  }
+  if (path.includes('compress-photo-to-50kb')) {
+    return {
+      tab: 'photo',
+      targetKb: 50,
+      badgeText: '📸 Passport Photo Mode: 50 KB',
+      title: 'Compress Photo to 50KB for Exam & Passport Forms — Shrinker',
+    };
+  }
+  if (path.includes('compress-image-to-100kb')) {
+    return {
+      tab: 'photo',
+      targetKb: 100,
+      badgeText: '🎯 Target: 100 KB Mode',
+      title: 'Compress Image to 100KB Online (Free & Private) — Shrinker',
+    };
+  }
+  if (path.includes('compress-pdf')) {
+    return {
+      tab: 'pdf',
+      targetKb: 100,
+      badgeText: '📄 PDF Compression Mode',
+      title: 'Compress PDF to 100KB / 200KB Online (100% Offline) — Shrinker',
+    };
+  }
+  return {
+    tab: 'photo',
+    targetKb: 50,
+    badgeText: 'Target 20KB, 50KB, 100KB',
+    title: 'Shrinker — Photo & PDF Compressor to Exact KB (20KB, 50KB, 100KB)',
+  };
+};
+
 export const App: React.FC = () => {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const [activeTab, setActiveTab] = useState<ActiveTab>('photo');
+  const routeConfig = getRouteConfig();
+  const [activeTab, setActiveTab] = useState<ActiveTab>(routeConfig.tab);
+  const [targetKb] = useState<number>(routeConfig.targetKb);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    document.title = routeConfig.title;
+  }, [routeConfig.title]);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -55,7 +110,7 @@ export const App: React.FC = () => {
             }}
           >
             <Zap size={13} color="#38bdf8" />
-            <span>Target 20KB, 50KB, 100KB</span>
+            <span>{routeConfig.badgeText}</span>
           </div>
 
           <div
@@ -99,7 +154,7 @@ export const App: React.FC = () => {
         <AdBanner slot={MONETIZATION_CONFIG.topBannerSlot} format="horizontal" />
 
         {/* Tab Views */}
-        {activeTab === 'photo' && <PhotoCompressor />}
+        {activeTab === 'photo' && <PhotoCompressor initialTargetKb={targetKb} />}
         {activeTab === 'pdf' && <PdfCompressor />}
         {activeTab === 'batch' && <BatchCompressor />}
 
