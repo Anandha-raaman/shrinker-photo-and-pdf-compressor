@@ -11,8 +11,8 @@ export const MONETIZATION_CONFIG = {
   // Set to true once you have your Google AdSense account approved
   enabled: false,
   
-  // Your Google AdSense Publisher ID (e.g. "ca-pub-1234567890123456")
-  adsenseClientId: 'ca-pub-XXXXXXXXXXXXXXXX',
+  // Your Google AdSense Publisher ID
+  adsenseClientId: 'ca-pub-8146008157325664',
 
   // Ad Slot IDs from your AdSense dashboard
   topBannerSlot: '1234567890',
