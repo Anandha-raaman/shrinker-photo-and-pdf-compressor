@@ -1,13 +1,29 @@
 import React from 'react';
-import { ShieldCheck, Moon, Sun, Sparkles, HelpCircle } from 'lucide-react';
+import { Moon, Sun, Share2 } from 'lucide-react';
 
 interface HeaderProps {
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
-  onOpenStoreKit: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme, onOpenStoreKit }) => {
+export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
+  const handleShareWebsite = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Shrinker: Free Photo & PDF Compressor',
+          text: 'Compress photos & PDFs to exact KB (20KB, 50KB, 100KB) 100% offline & free!',
+          url: window.location.href,
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        alert('Website link copied to clipboard!');
+      }
+    } catch (e) {
+      console.warn('Share cancelled or not supported', e);
+    }
+  };
+
   return (
     <header className="app-header">
       <div className="brand-wrapper">
@@ -19,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme, onOpenStor
       </div>
 
       <div className="header-actions">
-        <div className="offline-pill" title="100% On-Device Processing. No files leave your phone.">
+        <div className="offline-pill" title="100% On-Device Processing. No files leave your computer.">
           <span className="offline-dot"></span>
           <span>100% Offline</span>
         </div>
@@ -35,12 +51,11 @@ export const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme, onOpenStor
 
         <button
           className="icon-btn"
-          onClick={onOpenStoreKit}
-          title="Play Store Publishing Kit"
-          aria-label="Play Store Kit"
-          style={{ background: 'rgba(99, 102, 241, 0.2)', color: '#818cf8', borderColor: 'rgba(99, 102, 241, 0.4)' }}
+          onClick={handleShareWebsite}
+          title="Share Website"
+          aria-label="Share Website"
         >
-          <Sparkles size={17} />
+          <Share2 size={16} />
         </button>
       </div>
     </header>

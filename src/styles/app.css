@@ -24,7 +24,7 @@ body {
   flex-direction: column;
   min-height: 100vh;
   min-height: 100dvh;
-  max-width: 480px;
+  max-width: 580px;
   margin: 0 auto;
   position: relative;
   background-color: var(--bg-surface);
@@ -37,6 +37,7 @@ body {
     padding: 24px 0;
   }
   .app-container {
+    max-width: 660px;
     border-radius: var(--radius-xl);
     border: 1px solid var(--border-subtle);
     min-height: calc(100vh - 48px);
@@ -525,7 +526,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 480px;
+  max-width: 660px;
   z-index: 50;
   background: rgba(17, 24, 39, 0.95);
   backdrop-filter: blur(20px);

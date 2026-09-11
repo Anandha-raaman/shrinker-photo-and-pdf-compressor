@@ -4,17 +4,15 @@ import { BottomNav, ActiveTab } from './components/BottomNav';
 import { PhotoCompressor } from './components/PhotoCompressor';
 import { PdfCompressor } from './components/PdfCompressor';
 import { BatchCompressor } from './components/BatchCompressor';
-import { PlayStoreKitModal } from './components/PlayStoreKitModal';
-import { StoreAssetsGenerator } from './components/StoreAssetsGenerator';
+import { FaqSection } from './components/FaqSection';
 import { AdBanner } from './components/AdBanner';
 import { MONETIZATION_CONFIG } from './config/monetization';
-import { Sparkles, ShieldCheck, Zap, Rocket, Heart, ExternalLink } from 'lucide-react';
+import { Sparkles, ShieldCheck, Zap, Heart } from 'lucide-react';
 import './styles/app.css';
 
 export const App: React.FC = () => {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [activeTab, setActiveTab] = useState<ActiveTab>('photo');
-  const [showStoreKitModal, setShowStoreKitModal] = useState<boolean>(false);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -27,11 +25,7 @@ export const App: React.FC = () => {
   return (
     <div className="app-container">
       {/* Top Bar */}
-      <Header
-        theme={theme}
-        onToggleTheme={toggleTheme}
-        onOpenStoreKit={() => setShowStoreKitModal(true)}
-      />
+      <Header theme={theme} onToggleTheme={toggleTheme} />
 
       {/* Main Content View */}
       <main className="app-content">
@@ -108,36 +102,17 @@ export const App: React.FC = () => {
         {activeTab === 'photo' && <PhotoCompressor />}
         {activeTab === 'pdf' && <PdfCompressor />}
         {activeTab === 'batch' && <BatchCompressor />}
-        {activeTab === 'storekit' && (
-          <div className="card">
-            <div className="card-title">
-              <Rocket size={18} color="#818cf8" />
-              Google Play Publishing Hub
-            </div>
-            <p className="card-subtitle">
-              Assets, ASO listing copy, and Android Studio packaging tools.
-            </p>
-
-            <StoreAssetsGenerator />
-
-            <button
-              className="btn-primary"
-              onClick={() => setShowStoreKitModal(true)}
-              style={{ marginTop: '14px' }}
-            >
-              <Rocket size={16} />
-              Open Full Play Store Kit
-            </button>
-          </div>
-        )}
 
         {/* Bottom Monetization Ad Slot */}
         <AdBanner slot={MONETIZATION_CONFIG.downloadSlot} format="auto" />
 
+        {/* Informative FAQ & User Guide Section (AdSense Content Anchor) */}
+        <FaqSection />
+
         {/* Web App Footer & Links */}
         <footer
           style={{
-            marginTop: '10px',
+            marginTop: '16px',
             paddingTop: '16px',
             borderTop: '1px solid var(--border-subtle)',
             display: 'flex',
@@ -165,18 +140,17 @@ export const App: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <span>Built with</span>
             <Heart size={12} color="#ec4899" fill="#ec4899" />
-            <span>for zero data collection</span>
+            <span>for privacy & speed</span>
+          </div>
+
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+            &copy; 2026 Shrinker. All files processed locally.
           </div>
         </footer>
       </main>
 
       {/* Mobile Bottom Navigation */}
       <BottomNav activeTab={activeTab} onSelectTab={setActiveTab} />
-
-      {/* Play Store Kit Modal */}
-      {showStoreKitModal && (
-        <PlayStoreKitModal onClose={() => setShowStoreKitModal(false)} />
-      )}
     </div>
   );
 };
