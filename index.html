@@ -115,7 +115,69 @@
 </head>
 
 <body>
-  <div id="root"></div>
+  <div id="root">
+    <!-- Static semantic fallback for Google AdSense and search crawlers before client-side hydration -->
+    <noscript>
+      <style>
+        .crawler-content { display: block !important; }
+      </style>
+    </noscript>
+    <div class="crawler-content" style="max-width: 800px; margin: 0 auto; padding: 24px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #e2e8f0; line-height: 1.6;">
+      <header style="text-align: center; margin-bottom: 24px;">
+        <h1 style="font-size: 1.8rem; font-weight: 800; color: #f8fafc; margin-bottom: 8px;">
+          Shrinker — Photo & PDF Compressor to Exact KB
+        </h1>
+        <p style="font-size: 0.95rem; color: #94a3b8; max-width: 640px; margin: 0 auto;">
+          Compress photos, signatures, and multi-page PDF documents to exact file sizes (20KB, 50KB, 100KB, 200KB) for UPSC, SSC, IBPS, NEET exams, job portals, and visa applications. 100% client-side privacy with zero server uploads.
+        </p>
+      </header>
+
+      <section style="background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+        <h2 style="font-size: 1.2rem; color: #38bdf8; margin-top: 0;">How to Compress Photos & Signatures to Exact KB</h2>
+        <ol style="padding-left: 20px; color: #cbd5e1; font-size: 0.9rem;">
+          <li style="margin-bottom: 8px;"><strong>Upload or Drop Your File:</strong> Select any JPEG, PNG, or WebP photo or scanned signature document from your device.</li>
+          <li style="margin-bottom: 8px;"><strong>Choose Target File Size:</strong> Select preset targets such as 20 KB (signatures), 50 KB (passport photos), 100 KB, or enter any custom target KB value.</li>
+          <li style="margin-bottom: 8px;"><strong>One-Click Precision Compression:</strong> Our smart binary-search engine calculates optimal dimensions and quality compression tables to fit strictly within your requirement while preserving sharpness.</li>
+          <li><strong>Instant Download:</strong> Download your processed document directly to your device with zero watermark.</li>
+        </ol>
+      </section>
+
+      <section style="background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+        <h2 style="font-size: 1.2rem; color: #38bdf8; margin-top: 0;">Official Government & Examination Form Upload Rules</h2>
+        <p style="font-size: 0.88rem; color: #94a3b8;">
+          Shrinker is specifically calibrated to comply with strict dimensional and weight limits enforced by national testing agencies and public service commissions:
+        </p>
+        <ul style="padding-left: 20px; color: #cbd5e1; font-size: 0.88rem;">
+          <li style="margin-bottom: 6px;"><strong>UPSC Civil Services / NDA / CDS:</strong> Passport photo must be 20 KB – 50 KB; signature must be 10 KB – 20 KB.</li>
+          <li style="margin-bottom: 6px;"><strong>SSC (CGL, CHSL, MTS, GD):</strong> Photo strictly between 20 KB and 50 KB; signature strictly between 10 KB and 20 KB.</li>
+          <li style="margin-bottom: 6px;"><strong>Banking Exams (IBPS PO/Clerk, SBI):</strong> Passport photo 20 KB – 50 KB; signature and thumb impression 10 KB – 20 KB; handwritten declaration 50 KB – 100 KB.</li>
+          <li style="margin-bottom: 6px;"><strong>NTA NEET / JEE Main:</strong> Postcard photo and passport photo 10 KB – 200 KB; signature 4 KB – 30 KB.</li>
+          <li><strong>Multi-Page PDF Documents:</strong> Certificates, marksheets, and caste/EWS affidavits compressed under 100 KB or 200 KB without font distortion.</li>
+        </ul>
+      </section>
+
+      <section style="background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+        <h2 style="font-size: 1.2rem; color: #38bdf8; margin-top: 0;">100% Client-Side Privacy Guarantee</h2>
+        <p style="font-size: 0.88rem; color: #cbd5e1;">
+          Unlike conventional online compression websites that upload your confidential certificates, IDs, and signatures to third-party cloud servers, Shrinker executes all compression logic 100% locally inside your web browser using HTML5 Canvas and WebAssembly. No files ever leave your device or reach any remote server.
+        </p>
+      </section>
+
+      <section style="background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+        <h2 style="font-size: 1.2rem; color: #38bdf8; margin-top: 0;">Frequently Asked Questions</h2>
+        <div style="font-size: 0.88rem; color: #cbd5e1;">
+          <p><strong>Q: Will my photo become blurry after compression?</strong><br />
+          A: No. Shrinker uses high-fidelity bicubic resampling to preserve facial features, eye sharpness, and document borders while eliminating bloated metadata.</p>
+          <p><strong>Q: Is Shrinker free with no watermark?</strong><br />
+          A: Yes, Shrinker is completely free and never adds watermarks or limits your daily compression count.</p>
+        </div>
+      </section>
+
+      <footer style="text-align: center; font-size: 0.8rem; color: #64748b; padding-top: 16px; border-top: 1px solid #334155;">
+        <p>&copy; 2026 Shrinker. All rights reserved. | <a href="/privacy-policy.html" style="color: #38bdf8; text-decoration: none;">Privacy Policy</a></p>
+      </footer>
+    </div>
+  </div>
   <script type="module" src="/src/main.tsx"></script>
 </body>
 

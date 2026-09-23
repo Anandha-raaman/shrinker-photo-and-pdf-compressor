@@ -179,14 +179,21 @@ export const App: React.FC = () => {
             textAlign: 'center',
           }}
         >
-          <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', justifyContent: 'center' }}>
             <a
               href="/privacy-policy.html"
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}
             >
-              Privacy Policy
+              Privacy Policy & Terms
+            </a>
+            <span>•</span>
+            <a
+              href="mailto:support@shrinkr.app"
+              style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}
+            >
+              Contact Support
             </a>
             <span>•</span>
             <span style={{ color: 'var(--text-secondary)' }}>100% Free Client-Side</span>
