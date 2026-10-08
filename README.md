@@ -1,83 +1,87 @@
-# ⚡ Shrinker: Photo & PDF Compressor
+# ⚡ Shrinker — Photo & PDF Compressor to Exact KB
 
-> **100% Offline, Privacy-First Photo and Multi-Page PDF Compressor to Exact File Sizes (20KB, 50KB, 100KB, 200KB).**
+> **A 100% Privacy-First, Client-Side Photo & Multi-Page PDF Compressor designed for instant, exact file size targeting (20KB, 50KB, 100KB, 200KB) with zero cloud server uploads.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Privacy](https://img.shields.io/badge/Privacy-100%25%20Offline-success.svg)](#privacy-guarantee)
-[![Platform](https://img.shields.io/badge/Platform-Web%20%7C%20Android-indigo.svg)](#deployment)
-
----
-
-## 🌟 Key Features
-
-- 🎯 **Exact KB Target Compression**: Built-in precision binary search algorithm that automatically scales image dimensions and quality to hit strict government form limits (e.g. **20 KB** for signatures/thumbprints, **50 KB** for passport/visa photos, **100 KB** for job/exam portals).
-- 📄 **Multi-Page PDF Compressor**: Renders and compacts multi-page scanned documents, resumes, and certificates from 15MB down to <300KB without losing text readability.
-- 🗂️ **Batch Photo Compressor**: Compress up to 30 photos at once and download everything as a single `.zip` file.
-- 🔒 **100% Client-Side & Private**: All compression algorithms execute inside the browser's memory. **Zero user files are ever uploaded, transmitted, or stored on external servers.**
-- 💰 **Monetization-Ready**: Pre-configured responsive Google AdSense banners for immediate passive ad earnings.
-- 📱 **Google Play Store Ready**: Pre-packaged with Capacitor for instant `.aab` / `.apk` release generation.
+[![Live Web Application](https://img.shields.io/badge/Live%20App-Online-success.svg?style=for-the-badge&logo=vercel)](https://shrinker-photo-and-pdf-compressor.vercel.app/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
+[![Privacy: 100% Offline](https://img.shields.io/badge/Privacy-100%25%20On--Device-indigo.svg?style=for-the-badge)](#-privacy--security-architecture)
 
 ---
 
-## 🛠️ Technology Stack
+## 🌐 Live Application & Production Links
 
-- **Frontend**: React 18 + TypeScript + Vite
-- **Styling**: Vanilla CSS Design System (Dark & Light theme, tactile mobile-first UI)
-- **PDF Engine**: `pdf-lib` + `pdfjs-dist` (client-side canvas rendering)
-- **Archive Engine**: `jszip` (bulk photo ZIP packaging)
-- **Mobile Runtime**: Capacitor 7 (Android native packaging)
+- **Live Web Application:** [https://shrinker-photo-and-pdf-compressor.vercel.app/](https://shrinker-photo-and-pdf-compressor.vercel.app/)
+- **GitHub Repository:** [https://github.com/Anandha-raaman/shrinker-photo-and-pdf-compressor](https://github.com/Anandha-raaman/shrinker-photo-and-pdf-compressor)
 
 ---
 
-## 🚀 Quick Start (Local Development)
+## 🌟 Key Features & Capabilities
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/Anandha-raaman/shrinker-photo-and-pdf-compressor.git
+- 🎯 **Exact KB Target Compression:** Built-in precision binary search algorithm that automatically scales image dimensions and DCT quantization tables to hit strict recruitment form limits (**20 KB** for signatures/thumbprints, **50 KB** for passport photos, **100 KB** for job/exam portals).
+- 📄 **Multi-Page PDF Compressor:** Renders and compacts multi-page scanned documents, marksheets, and certificates from 15MB down to <300KB without losing text readability.
+- 🗂️ **Batch Photo Compressor:** Compress 5, 10, 20+ photos simultaneously and download all processed images in a single `.zip` archive.
+- 📱 **Mobile & HEIC Auto-Conversion:** Built with a custom Single-Pass Master Canvas RAM architecture supporting mobile Android `content://` URIs and automatic client-side iPhone/Samsung `.heic` / `.heif` photo conversion.
+- 🔒 **100% Client-Side Privacy:** All compression algorithms execute inside the browser's memory. **Zero user files are ever uploaded, transmitted, or stored on external servers.**
+- 💰 **Monetization & AdSense Compliant:** Fully configured with Google AdSense Auto-Ads, `ads.txt`, `sitemap.xml`, and complete trust pages (About Us, Terms of Service, Contact Us, Privacy Policy).
 
-# 2. Navigate to project
-cd shrinker-photo-and-pdf-compressor
+---
 
-# 3. Install dependencies
-npm install
+## 🛠️ Technology Stack & Architecture
 
-# 4. Start local development server
-npm run dev
+- **Frontend Framework:** React 18 + TypeScript + Vite
+- **PDF Engine:** `pdf-lib` (stream object reconstruction) + `pdfjs-dist` (canvas page rendering)
+- **Archive Engine:** `JSZip` (bulk photo ZIP packaging)
+- **HEIC Converter:** `heic2any` (dynamic client-side HEIC/HEIF to JPEG converter)
+- **Styling System:** Custom Vanilla CSS Design System with Dark/Light theme switching & tactile mobile bottom navigation
+- **Deployment & CDN:** Vercel Global CDN with static route rewrites
+
+---
+
+## 🛡️ Privacy & Security Architecture
+
+Unlike traditional online compressors that transmit confidential passport photos, identity cards, signatures, and marksheets to remote cloud servers, **Shrinker operates 100% inside your local browser memory**:
+
+1. **File System Isolation:** User files (`File` / `Blob` / `ArrayBuffer`) are read directly into browser RAM.
+2. **Zero Upload Endpoints:** The application contains zero backend upload endpoints or third-party storage buckets.
+3. **Memory Safety:** Image objects and canvas memory buffers are automatically cleaned up after processing completes.
+
+---
+
+## 📂 Project Architecture
+
+```
+shrinker-photo-and-pdf-compressor/
+├── public/
+│   ├── about.html          # AdSense Compliant About Us Page
+│   ├── contact.html        # Support & Inquiries Page
+│   ├── terms.html          # Terms of Service & Disclaimer Page
+│   ├── privacy-policy.html # Privacy Policy & DART Cookie Disclosures
+│   ├── ads.txt             # Google AdSense Publisher Verification
+│   ├── sitemap.xml         # XML Sitemap for Search Crawlers
+│   └── manifest.json       # Progressive Web App Manifest
+├── src/
+│   ├── components/
+│   │   ├── PhotoCompressor.tsx # Exact KB & Manual Image Compressor
+│   │   ├── PdfCompressor.tsx   # Multi-Page PDF Document Optimizer
+│   │   ├── BatchCompressor.tsx # Bulk Image Compressor & ZIP Exporter
+│   │   ├── FaqSection.tsx      # Comprehensive Form Guidelines & FAQs
+│   │   └── Header.tsx / BottomNav.tsx
+│   ├── services/
+│   │   ├── imageCompressor.ts  # Binary-Search Quality Engine
+│   │   └── pdfCompressor.ts    # PDF Canvas Rendering & Stream Compactor
+│   └── App.tsx                 # Main Application Layout & Routing
+├── vercel.json             # Route Rewrites & Global CDN Configuration
+└── package.json
 ```
 
-Open your browser at `http://localhost:3000/`.
-
 ---
 
-## 🌐 Free Web Deployment (Vercel)
+## 👤 Author & Maintainer
 
-1. Open [Vercel](https://vercel.com/new).
-2. Connect your GitHub account and import `shrinker-photo-and-pdf-compressor`.
-3. Click **Deploy** (zero configuration needed, `vercel.json` is included).
-4. Your website will be live in 45 seconds with free HTTPS and global CDN.
-
----
-
-## 📱 Google Play Store Android Build
-
-```bash
-# 1. Build web bundle
-npm run build
-
-# 2. Add native Android platform
-npx cap add android
-
-# 3. Open in Android Studio to build signed .AAB
-npx cap open android
-```
-
-Full publishing kit, keywords, and Google Play Data Safety answers can be found in [`docs/PLAY_STORE_GUIDE.md`](docs/PLAY_STORE_GUIDE.md).
-
----
-
-## 🛡️ Privacy Guarantee
-
-Shrinker is strictly on-device. It does not collect personal identifiable information (PII), device identifiers, or tracking telemetry. Read our full [Privacy Policy](public/privacy-policy.html).
+**Anandha Raaman S**  
+*Python & Full-Stack Developer*  
+- **GitHub:** [@Anandha-raaman](https://github.com/Anandha-raaman)  
+- **Live Project:** [Shrinker PDF & Photo Compressor](https://shrinker-photo-and-pdf-compressor.vercel.app/)
 
 ---
 
