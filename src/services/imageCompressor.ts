@@ -17,6 +17,13 @@ export interface CompressionResult {
   timeMs: number;
 }
 
+export interface LoadedSource {
+  width: number;
+  height: number;
+  drawTo: (ctx: CanvasRenderingContext2D, targetWidth: number, targetHeight: number) => void;
+  cleanup: () => void;
+}
+
 export function formatBytes(bytes: number, decimals: number = 1): string {
   if (bytes === 0) return '0 B';
   const k = 1024;
@@ -29,7 +36,6 @@ export function formatBytes(bytes: number, decimals: number = 1): string {
 /**
  * Loads an HTMLImageElement safely across Desktop and Mobile browsers.
  * CRITICAL RULE: NEVER set crossOrigin = 'anonymous' for blob: or data: URLs.
- * Mobile Chrome and Mobile Safari block local blob URLs when crossOrigin is set.
  */
 export function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -51,28 +57,39 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
 }
 
 /**
- * 3-Tier Mobile & Desktop Bulletproof Image Loader:
- * Tier 1: URL.createObjectURL + HTMLImageElement (Fastest, zero base64 memory overhead, 100% reliable on Mobile Chrome & Safari when NO crossOrigin is set)
- * Tier 2: createImageBitmap (Hardware-accelerated GPU decode)
- * Tier 3: FileReader readAsDataURL + HTMLImageElement
+ * Reads a File or Blob ONCE into an in-memory master canvas.
+ * This guarantees that mobile browsers (Android content:// URIs & iOS gallery)
+ * only read the file handle ONE time, completely preventing Android MediaProvider
+ * permission timeouts and mid-loop FileReader crashes.
  */
-async function getLoadedImageDrawable(fileOrBlob: File | Blob): Promise<{
-  width: number;
-  height: number;
-  draw: (ctx: CanvasRenderingContext2D, targetWidth: number, targetHeight: number) => void;
-  cleanup: () => void;
-}> {
-  // Tier 1: URL.createObjectURL (Native browser pointer - works on Android content:// URIs & iOS gallery)
+export async function loadSourceImage(fileOrBlob: File | Blob): Promise<LoadedSource> {
+  // Tier 1: URL.createObjectURL + HTMLImageElement (Fastest, zero base64 memory overhead)
   try {
     const objectUrl = URL.createObjectURL(fileOrBlob);
     try {
       const img = await loadImage(objectUrl);
-      return {
-        width: img.naturalWidth || img.width,
-        height: img.naturalHeight || img.height,
-        draw: (ctx, tw, th) => ctx.drawImage(img, 0, 0, tw, th),
-        cleanup: () => URL.revokeObjectURL(objectUrl),
-      };
+      const width = img.naturalWidth || img.width;
+      const height = img.naturalHeight || img.height;
+
+      // Copy source to master canvas once and immediately revoke ObjectURL
+      const masterCanvas = document.createElement('canvas');
+      masterCanvas.width = width;
+      masterCanvas.height = height;
+      const mCtx = masterCanvas.getContext('2d');
+      if (mCtx) {
+        mCtx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(objectUrl); // Clean up immediately
+
+        return {
+          width,
+          height,
+          drawTo: (ctx, tw, th) => ctx.drawImage(masterCanvas, 0, 0, tw, th),
+          cleanup: () => {
+            masterCanvas.width = 1;
+            masterCanvas.height = 1;
+          },
+        };
+      }
     } catch (e) {
       URL.revokeObjectURL(objectUrl);
       console.warn('URL.createObjectURL tier failed, falling back to createImageBitmap', e);
@@ -85,12 +102,27 @@ async function getLoadedImageDrawable(fileOrBlob: File | Blob): Promise<{
   if (typeof createImageBitmap === 'function') {
     try {
       const bitmap = await createImageBitmap(fileOrBlob);
-      return {
-        width: bitmap.width,
-        height: bitmap.height,
-        draw: (ctx, tw, th) => ctx.drawImage(bitmap, 0, 0, tw, th),
-        cleanup: () => bitmap.close(),
-      };
+      const width = bitmap.width;
+      const height = bitmap.height;
+
+      const masterCanvas = document.createElement('canvas');
+      masterCanvas.width = width;
+      masterCanvas.height = height;
+      const mCtx = masterCanvas.getContext('2d');
+      if (mCtx) {
+        mCtx.drawImage(bitmap, 0, 0);
+        bitmap.close(); // Clean up bitmap immediately
+
+        return {
+          width,
+          height,
+          drawTo: (ctx, tw, th) => ctx.drawImage(masterCanvas, 0, 0, tw, th),
+          cleanup: () => {
+            masterCanvas.width = 1;
+            masterCanvas.height = 1;
+          },
+        };
+      }
     } catch (e) {
       console.warn('createImageBitmap tier failed, falling back to FileReader', e);
     }
@@ -101,16 +133,102 @@ async function getLoadedImageDrawable(fileOrBlob: File | Blob): Promise<{
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result as string);
     reader.onerror = () =>
-      reject(new Error('Mobile file permission error. Please select the image again from your phone gallery.'));
+      reject(new Error('Unable to read photo. Please select the image again from your phone gallery.'));
     reader.readAsDataURL(fileOrBlob);
   });
 
   const img = await loadImage(dataUrl);
+  const width = img.naturalWidth || img.width;
+  const height = img.naturalHeight || img.height;
+
+  const masterCanvas = document.createElement('canvas');
+  masterCanvas.width = width;
+  masterCanvas.height = height;
+  const mCtx = masterCanvas.getContext('2d');
+  if (mCtx) {
+    mCtx.drawImage(img, 0, 0);
+  }
+
   return {
-    width: img.naturalWidth || img.width,
-    height: img.naturalHeight || img.height,
-    draw: (ctx, tw, th) => ctx.drawImage(img, 0, 0, tw, th),
-    cleanup: () => {},
+    width,
+    height,
+    drawTo: (ctx, tw, th) => ctx.drawImage(masterCanvas, 0, 0, tw, th),
+    cleanup: () => {
+      masterCanvas.width = 1;
+      masterCanvas.height = 1;
+    },
+  };
+}
+
+/**
+ * Internal canvas compression engine working from an in-memory LoadedSource
+ */
+export async function compressLoadedSource(
+  source: LoadedSource,
+  originalFileSize: number,
+  options: CompressionOptions
+): Promise<CompressionResult> {
+  const startTime = performance.now();
+  const format = options.format || 'image/jpeg';
+  const quality = Math.max(0.05, Math.min(1.0, options.quality));
+
+  let targetWidth = source.width;
+  let targetHeight = source.height;
+
+  // Scale dimensions if requested
+  if (options.maxWidth && targetWidth > options.maxWidth) {
+    const ratio = options.maxWidth / targetWidth;
+    targetWidth = Math.round(options.maxWidth);
+    targetHeight = Math.round(targetHeight * ratio);
+  }
+
+  if (options.maxHeight && targetHeight > options.maxHeight) {
+    const ratio = options.maxHeight / targetHeight;
+    targetHeight = Math.round(options.maxHeight);
+    targetWidth = Math.round(targetWidth * ratio);
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) throw new Error('Unable to create canvas context on this device');
+
+  // Fill white background for transparent PNG to JPEG conversion
+  if (format === 'image/jpeg') {
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, targetWidth, targetHeight);
+  }
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  source.drawTo(ctx, targetWidth, targetHeight);
+
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (b) => {
+        if (b) resolve(b);
+        else reject(new Error('Canvas toBlob compression failed'));
+      },
+      format,
+      quality
+    );
+  });
+
+  const previewUrl = URL.createObjectURL(blob);
+  const savings = Math.max(0, Math.round(((originalFileSize - blob.size) / originalFileSize) * 100));
+
+  return {
+    blob,
+    previewUrl,
+    size: blob.size,
+    originalSize: originalFileSize,
+    width: targetWidth,
+    height: targetHeight,
+    savingsPercent: savings,
+    format: format.replace('image/', '').toUpperCase(),
+    timeMs: Math.round(performance.now() - startTime),
   };
 }
 
@@ -121,73 +239,11 @@ export async function compressImage(
   file: File | Blob,
   options: CompressionOptions
 ): Promise<CompressionResult> {
-  const startTime = performance.now();
-  const format = options.format || 'image/jpeg';
-  const quality = Math.max(0.05, Math.min(1.0, options.quality));
-
-  const drawable = await getLoadedImageDrawable(file);
-
+  const source = await loadSourceImage(file);
   try {
-    let targetWidth = drawable.width;
-    let targetHeight = drawable.height;
-
-    // Scale dimensions if requested
-    if (options.maxWidth && targetWidth > options.maxWidth) {
-      const ratio = options.maxWidth / targetWidth;
-      targetWidth = Math.round(options.maxWidth);
-      targetHeight = Math.round(targetHeight * ratio);
-    }
-
-    if (options.maxHeight && targetHeight > options.maxHeight) {
-      const ratio = options.maxHeight / targetHeight;
-      targetHeight = Math.round(options.maxHeight);
-      targetWidth = Math.round(targetWidth * ratio);
-    }
-
-    const canvas = document.createElement('canvas');
-    canvas.width = targetWidth;
-    canvas.height = targetHeight;
-    const ctx = canvas.getContext('2d');
-
-    if (!ctx) throw new Error('Unable to create canvas context on this device');
-
-    // Fill white background for transparent PNG to JPEG conversion
-    if (format === 'image/jpeg') {
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, targetWidth, targetHeight);
-    }
-
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    drawable.draw(ctx, targetWidth, targetHeight);
-
-    const blob = await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob(
-        (b) => {
-          if (b) resolve(b);
-          else reject(new Error('Canvas toBlob compression failed'));
-        },
-        format,
-        quality
-      );
-    });
-
-    const previewUrl = URL.createObjectURL(blob);
-    const savings = Math.max(0, Math.round(((file.size - blob.size) / file.size) * 100));
-
-    return {
-      blob,
-      previewUrl,
-      size: blob.size,
-      originalSize: file.size,
-      width: targetWidth,
-      height: targetHeight,
-      savingsPercent: savings,
-      format: format.replace('image/', '').toUpperCase(),
-      timeMs: Math.round(performance.now() - startTime),
-    };
+    return await compressLoadedSource(source, file.size, options);
   } finally {
-    drawable.cleanup();
+    source.cleanup();
   }
 }
 
@@ -203,16 +259,18 @@ export async function compressToExactKB(
   const targetBytes = targetKB * 1024;
   const startTime = performance.now();
 
-  const drawable = await getLoadedImageDrawable(file);
-  const origWidth = drawable.width;
-  const origHeight = drawable.height;
-
-  drawable.cleanup();
+  // READ THE FILE ONCE into RAM!
+  const source = await loadSourceImage(file);
 
   try {
-    // If file is already smaller than target, run light pass to optimize format
+    const origWidth = source.width;
+    const origHeight = source.height;
+
+    // If file is already smaller than target, run light pass
     if (file.size <= targetBytes) {
-      return await compressImage(file, { quality: 0.92, format });
+      const res = await compressLoadedSource(source, file.size, { quality: 0.92, format });
+      res.timeMs = Math.round(performance.now() - startTime);
+      return res;
     }
 
     let minQ = 0.05;
@@ -230,7 +288,7 @@ export async function compressToExactKB(
 
       for (let iter = 0; iter < 7; iter++) {
         const midQ = (minQ + maxQ) / 2;
-        const result = await compressImage(file, {
+        const result = await compressLoadedSource(source, file.size, {
           quality: midQ,
           maxWidth: curWidth,
           maxHeight: curHeight,
@@ -261,7 +319,7 @@ export async function compressToExactKB(
 
     // Fallback if bestResult not found
     if (!bestResult) {
-      bestResult = await compressImage(file, {
+      bestResult = await compressLoadedSource(source, file.size, {
         quality: 0.1,
         maxWidth: Math.round(origWidth * scale),
         maxHeight: Math.round(origHeight * scale),
@@ -271,7 +329,7 @@ export async function compressToExactKB(
 
     bestResult.timeMs = Math.round(performance.now() - startTime);
     return bestResult;
-  } catch (err: any) {
-    throw new Error(err.message || 'Image compression failed on mobile browser.');
+  } finally {
+    source.cleanup();
   }
 }
