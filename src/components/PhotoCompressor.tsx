@@ -68,15 +68,49 @@ export const PhotoCompressor: React.FC<PhotoCompressorProps> = ({ initialTargetK
     return `${originalName}_compressed.${ext}`;
   };
 
-  const handleFileSelect = (selectedFile: File) => {
-    if (!selectedFile.type.startsWith('image/')) {
-      alert('Please upload a valid image file (JPG, PNG, WebP)');
+  const handleFileSelect = async (selectedFile: File) => {
+    let processFile = selectedFile;
+
+    // Check if HEIC / HEIF image format (common iPhone & Samsung photo output)
+    const isHeic =
+      selectedFile.name.toLowerCase().endsWith('.heic') ||
+      selectedFile.name.toLowerCase().endsWith('.heif') ||
+      selectedFile.type.includes('heic') ||
+      selectedFile.type.includes('heif');
+
+    if (isHeic) {
+      try {
+        setLoading(true);
+        const heic2any = (await import('heic2any')).default;
+        const convertedBlob = await heic2any({
+          blob: selectedFile,
+          toType: 'image/jpeg',
+          quality: 0.9,
+        });
+        const blobResult = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+        processFile = new File(
+          [blobResult],
+          selectedFile.name.replace(/\.(heic|heif)$/i, '.jpg'),
+          { type: 'image/jpeg' }
+        );
+      } catch (e) {
+        console.warn('HEIC conversion skipped', e);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // Flexible mobile extension check (handles empty type from Android content URIs)
+    const isImageExtension = selectedFile.name.match(/\.(jpg|jpeg|png|webp|bmp|heic|heif)$/i);
+    if (!processFile.type.startsWith('image/') && !isImageExtension && processFile.type !== '') {
+      alert('Please upload a valid image file (JPG, PNG, WebP, HEIC)');
       return;
     }
-    setFile(selectedFile);
+
+    setFile(processFile);
     setResult(null);
     setDownloaded(false);
-    const url = URL.createObjectURL(selectedFile);
+    const url = URL.createObjectURL(processFile);
     setOriginalPreview(url);
   };
 
@@ -248,7 +282,7 @@ export const PhotoCompressor: React.FC<PhotoCompressorProps> = ({ initialTargetK
             type="file"
             ref={fileInputRef}
             onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
-            accept="image/jpeg,image/png,image/webp,image/bmp"
+            accept="image/*,.heic,.heif"
             style={{ display: 'none' }}
           />
           <div className="dropzone-icon-box">
