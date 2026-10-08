@@ -26,14 +26,72 @@ export function formatBytes(bytes: number, decimals: number = 1): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
 
+/**
+ * Loads an HTMLImageElement safely across Desktop and Mobile browsers.
+ * CRITICAL FIX: Do NOT set crossOrigin = 'anonymous' for blob: or data: URLs,
+ * because mobile Chrome and Safari block local blob URLs when crossOrigin is set,
+ * throwing "Failed to load image: [object Event]".
+ */
 export function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    // Only set crossOrigin for external http/https URLs. Never for blob: or data:
+    if (src.startsWith('http://') || src.startsWith('https://')) {
+      img.crossOrigin = 'anonymous';
+    }
     img.onload = () => resolve(img);
-    img.onerror = (e) => reject(new Error('Failed to load image: ' + e));
+    img.onerror = () => {
+      reject(
+        new Error(
+          'Failed to load image. The format may be unsupported by your phone browser or the file is corrupt.'
+        )
+      );
+    };
     img.src = src;
   });
+}
+
+/**
+ * Helper to decode image dimensions and draw onto canvas safely on Mobile & Desktop.
+ * Prefers createImageBitmap (hardware-accelerated & memory efficient on mobile phones).
+ * Falls back to FileReader data URL + HTMLImageElement if createImageBitmap fails.
+ */
+async function getLoadedImageDrawable(fileOrBlob: File | Blob): Promise<{
+  width: number;
+  height: number;
+  draw: (ctx: CanvasRenderingContext2D, targetWidth: number, targetHeight: number) => void;
+  cleanup: () => void;
+}> {
+  // Method 1: Try createImageBitmap (hardware accelerated, high performance on Mobile Chrome/Safari)
+  if (typeof createImageBitmap === 'function') {
+    try {
+      const bitmap = await createImageBitmap(fileOrBlob);
+      return {
+        width: bitmap.width,
+        height: bitmap.height,
+        draw: (ctx, tw, th) => ctx.drawImage(bitmap, 0, 0, tw, th),
+        cleanup: () => bitmap.close(),
+      };
+    } catch (e) {
+      console.warn('createImageBitmap failed, falling back to FileReader', e);
+    }
+  }
+
+  // Method 2: Fallback to FileReader readAsDataURL (Avoids blob CORS issues on mobile)
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('Failed to read image file on this device.'));
+    reader.readAsDataURL(fileOrBlob);
+  });
+
+  const img = await loadImage(dataUrl);
+  return {
+    width: img.naturalWidth || img.width,
+    height: img.naturalHeight || img.height,
+    draw: (ctx, tw, th) => ctx.drawImage(img, 0, 0, tw, th),
+    cleanup: () => {},
+  };
 }
 
 /**
@@ -47,12 +105,11 @@ export async function compressImage(
   const format = options.format || 'image/jpeg';
   const quality = Math.max(0.05, Math.min(1.0, options.quality));
 
-  const objectUrl = URL.createObjectURL(file);
-  try {
-    const img = await loadImage(objectUrl);
+  const drawable = await getLoadedImageDrawable(file);
 
-    let targetWidth = img.naturalWidth || img.width;
-    let targetHeight = img.naturalHeight || img.height;
+  try {
+    let targetWidth = drawable.width;
+    let targetHeight = drawable.height;
 
     // Scale dimensions if requested
     if (options.maxWidth && targetWidth > options.maxWidth) {
@@ -72,7 +129,7 @@ export async function compressImage(
     canvas.height = targetHeight;
     const ctx = canvas.getContext('2d');
 
-    if (!ctx) throw new Error('Unable to create canvas context');
+    if (!ctx) throw new Error('Unable to create canvas context on this device');
 
     // Fill white background for transparent PNG to JPEG conversion
     if (format === 'image/jpeg') {
@@ -82,13 +139,13 @@ export async function compressImage(
 
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+    drawable.draw(ctx, targetWidth, targetHeight);
 
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
         (b) => {
           if (b) resolve(b);
-          else reject(new Error('Canvas toBlob failed'));
+          else reject(new Error('Canvas toBlob compression failed'));
         },
         format,
         quality
@@ -110,7 +167,7 @@ export async function compressImage(
       timeMs: Math.round(performance.now() - startTime),
     };
   } finally {
-    URL.revokeObjectURL(objectUrl);
+    drawable.cleanup();
   }
 }
 
@@ -126,12 +183,13 @@ export async function compressToExactKB(
   const targetBytes = targetKB * 1024;
   const startTime = performance.now();
 
-  const objectUrl = URL.createObjectURL(file);
-  try {
-    const img = await loadImage(objectUrl);
-    const origWidth = img.naturalWidth || img.width;
-    const origHeight = img.naturalHeight || img.height;
+  const drawable = await getLoadedImageDrawable(file);
+  const origWidth = drawable.width;
+  const origHeight = drawable.height;
 
+  drawable.cleanup();
+
+  try {
     // If file is already smaller than target, run light pass to optimize format
     if (file.size <= targetBytes) {
       return await compressImage(file, { quality: 0.92, format });
@@ -142,7 +200,7 @@ export async function compressToExactKB(
     let bestResult: CompressionResult | null = null;
     let scale = 1.0;
 
-    // Up to 4 dimension downscale attempts if high resolution prevents hitting target
+    // Up to 5 dimension downscale attempts if high resolution prevents hitting target
     for (let scaleAttempt = 0; scaleAttempt < 5; scaleAttempt++) {
       const curWidth = Math.max(64, Math.round(origWidth * scale));
       const curHeight = Math.max(64, Math.round(origHeight * scale));
@@ -166,7 +224,7 @@ export async function compressToExactKB(
           maxQ = midQ; // Reduce quality
         }
 
-        // Within 4% of target is a sweet spot!
+        // Within 5% of target is a sweet spot!
         if (result.size <= targetBytes && result.size >= targetBytes * 0.95) {
           bestResult = result;
           break;
@@ -193,7 +251,7 @@ export async function compressToExactKB(
 
     bestResult.timeMs = Math.round(performance.now() - startTime);
     return bestResult;
-  } finally {
-    URL.revokeObjectURL(objectUrl);
+  } catch (err: any) {
+    throw new Error(err.message || 'Image compression failed on mobile browser.');
   }
 }

@@ -16,6 +16,7 @@ import confetti from 'canvas-confetti';
 import {
   compressImage,
   compressToExactKB,
+  loadImage,
   formatBytes,
   CompressionResult,
 } from '../services/imageCompressor';
@@ -138,10 +139,8 @@ export const PhotoCompressor: React.FC<PhotoCompressorProps> = ({ initialTargetK
       } else {
         let maxWidth: number | undefined = undefined;
         if (resolutionScale < 100) {
-          const img = new Image();
-          img.src = originalPreview!;
-          await new Promise((res) => (img.onload = res));
-          maxWidth = Math.round((img.naturalWidth * resolutionScale) / 100);
+          const img = await loadImage(originalPreview!);
+          maxWidth = Math.round(((img.naturalWidth || img.width) * resolutionScale) / 100);
         }
 
         compressionRes = await compressImage(file, {
