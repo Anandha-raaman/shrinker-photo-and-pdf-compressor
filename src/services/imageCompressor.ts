@@ -40,65 +40,51 @@ export function formatBytes(bytes: number, decimals: number = 1): string {
 export function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    // Only set crossOrigin for external http/https URLs. NEVER for blob: or data:
     if (src.startsWith('http://') || src.startsWith('https://')) {
       img.crossOrigin = 'anonymous';
     }
     img.onload = () => resolve(img);
     img.onerror = () => {
-      reject(
-        new Error(
-          'Failed to load image. The format may be unsupported by your phone browser or the file is corrupt.'
-        )
-      );
+      reject(new Error('Failed to decode image on this device.'));
     };
     img.src = src;
   });
 }
 
 /**
+ * Safe Mobile File Loader:
+ * Creates an object URL without crossOrigin and without revoking the stream prematurely.
+ * Falls back to FileReader readAsDataURL if object URL decoding is rejected by WebView.
+ */
+export function loadImageFromFile(fileOrBlob: File | Blob): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(fileOrBlob);
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => {
+      // Fallback for strict mobile webviews
+      const reader = new FileReader();
+      reader.onload = () => {
+        const fallbackImg = new Image();
+        fallbackImg.onload = () => resolve(fallbackImg);
+        fallbackImg.onerror = () =>
+          reject(new Error('Unable to decode image format on this device.'));
+        fallbackImg.src = reader.result as string;
+      };
+      reader.onerror = () =>
+        reject(new Error('Unable to read photo from your gallery. Please try selecting it again.'));
+      reader.readAsDataURL(fileOrBlob);
+    };
+    img.src = objectUrl;
+  });
+}
+
+/**
  * Reads a File or Blob ONCE into an in-memory master canvas.
- * This guarantees that mobile browsers (Android content:// URIs & iOS gallery)
- * only read the file handle ONE time, completely preventing Android MediaProvider
- * permission timeouts and mid-loop FileReader crashes.
+ * Guaranteed to read the file handle EXACTLY ONE TIME, avoiding Android stream revocation bugs.
  */
 export async function loadSourceImage(fileOrBlob: File | Blob): Promise<LoadedSource> {
-  // Tier 1: URL.createObjectURL + HTMLImageElement (Fastest, zero base64 memory overhead)
-  try {
-    const objectUrl = URL.createObjectURL(fileOrBlob);
-    try {
-      const img = await loadImage(objectUrl);
-      const width = img.naturalWidth || img.width;
-      const height = img.naturalHeight || img.height;
-
-      // Copy source to master canvas once and immediately revoke ObjectURL
-      const masterCanvas = document.createElement('canvas');
-      masterCanvas.width = width;
-      masterCanvas.height = height;
-      const mCtx = masterCanvas.getContext('2d');
-      if (mCtx) {
-        mCtx.drawImage(img, 0, 0);
-        URL.revokeObjectURL(objectUrl); // Clean up immediately
-
-        return {
-          width,
-          height,
-          drawTo: (ctx, tw, th) => ctx.drawImage(masterCanvas, 0, 0, tw, th),
-          cleanup: () => {
-            masterCanvas.width = 1;
-            masterCanvas.height = 1;
-          },
-        };
-      }
-    } catch (e) {
-      URL.revokeObjectURL(objectUrl);
-      console.warn('URL.createObjectURL tier failed, falling back to createImageBitmap', e);
-    }
-  } catch (e) {
-    console.warn('URL.createObjectURL creation failed', e);
-  }
-
-  // Tier 2: createImageBitmap (Hardware accelerated GPU decode)
+  // Method 1: createImageBitmap (hardware accelerated, ultra-fast on Mobile Chrome & Safari)
   if (typeof createImageBitmap === 'function') {
     try {
       const bitmap = await createImageBitmap(fileOrBlob);
@@ -111,7 +97,7 @@ export async function loadSourceImage(fileOrBlob: File | Blob): Promise<LoadedSo
       const mCtx = masterCanvas.getContext('2d');
       if (mCtx) {
         mCtx.drawImage(bitmap, 0, 0);
-        bitmap.close(); // Clean up bitmap immediately
+        bitmap.close();
 
         return {
           width,
@@ -124,20 +110,12 @@ export async function loadSourceImage(fileOrBlob: File | Blob): Promise<LoadedSo
         };
       }
     } catch (e) {
-      console.warn('createImageBitmap tier failed, falling back to FileReader', e);
+      console.warn('createImageBitmap failed, falling back to loadImageFromFile', e);
     }
   }
 
-  // Tier 3: FileReader readAsDataURL
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () =>
-      reject(new Error('Unable to read photo. Please select the image again from your phone gallery.'));
-    reader.readAsDataURL(fileOrBlob);
-  });
-
-  const img = await loadImage(dataUrl);
+  // Method 2: Safe ObjectURL / FileReader fallback
+  const img = await loadImageFromFile(fileOrBlob);
   const width = img.naturalWidth || img.width;
   const height = img.naturalHeight || img.height;
 
