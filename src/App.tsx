@@ -181,19 +181,39 @@ export const App: React.FC = () => {
         >
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', justifyContent: 'center' }}>
             <a
+              href="/about.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}
+            >
+              About Us
+            </a>
+            <span>•</span>
+            <a
               href="/privacy-policy.html"
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}
             >
-              Privacy Policy & Terms
+              Privacy Policy
             </a>
             <span>•</span>
             <a
-              href="mailto:support@shrinkr.app"
+              href="/terms.html"
+              target="_blank"
+              rel="noopener noreferrer"
               style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}
             >
-              Contact Support
+              Terms of Service
+            </a>
+            <span>•</span>
+            <a
+              href="/contact.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}
+            >
+              Contact Us
             </a>
             <span>•</span>
             <span style={{ color: 'var(--text-secondary)' }}>100% Free Client-Side</span>
